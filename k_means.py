@@ -1,37 +1,32 @@
 import random
-from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn.datasets import load_iris, make_blobs
-
+from matplotlib import pyplot as plt
+from sklearn.datasets import load_iris
 
 class KMeans:
-    def __init__(self, k=3, epochs=100):
+    def __init__(self, k=3, epochs=100, min_variance=0.2):
         self.ks = k
-        self.elbow = 0
+        self.min_variance = min_variance
         self.wcss = 0
         self.epochs = epochs
         self.centroids = []
         self.cluster_grp = []
 
     def get_elbow(self, X):
+        k = 1
         for k in range(1, self.ks):
-            y_means = self._fit(X, k)
+            self._fit(X, k)
             new_wcss = self.get_wcss(X)
-            pov = 0
+            pov = float('inf')
             if k > 1:
                 pov = (self.wcss - new_wcss) / self.wcss
-                if pov < 0.2:
-                    break
             print(f"no of clusters : {k} \t percentage of variance {pov}")
+            self.plot(X)
             self.wcss = new_wcss
-
-    def get_wcss(self, X):
-        new_wcss = 0
-        for centroid_indx in range(len(self.centroids)):
-            new_wcss += sum(self.euclidean_distance(
-                X[self.cluster_grp == centroid_indx], self.centroids[centroid_indx]))
-        return new_wcss
+            if pov < self.min_variance:
+                break
+        return k
 
     def _fit(self, X, k):
         rand_indx = random.sample(range(0, X.shape[0]), k)
@@ -46,11 +41,7 @@ class KMeans:
                 break
             self.centroids = new_centroids
 
-        self.plot(X)
         return self.cluster_grp
-
-    def euclidean_distance(self, X1, X2):
-        return np.sqrt(np.sum((X1 - X2)**2, axis=1))
 
     # Assign cluster clusters based on closest centroid
     def assign_clusters(self, X):
@@ -71,6 +62,16 @@ class KMeans:
                 X[self.cluster_grp == cluster_type].mean(axis=0))
         return np.array(new_centroids)
 
+    def euclidean_distance(self, X1, X2):
+        return np.sqrt(np.sum((X1 - X2)**2, axis=1))
+
+    def get_wcss(self, X):
+        new_wcss = 0
+        for centroid_indx in range(len(self.centroids)):
+            new_wcss += sum(self.euclidean_distance(
+                X[self.cluster_grp == centroid_indx], self.centroids[centroid_indx]))
+        return new_wcss
+
     def plot(self, X):
         plt.figure()
         for i in range(self.ks):
@@ -82,14 +83,8 @@ class KMeans:
 
 
 if __name__ == '__main__':
-    # X, _ = make_blobs(n_samples=100, cluster_std=[1, 1, 1, 1], centers=[
-    #                   (5, -5), (5, 5), (2.5, 2.5), (-2.5, -2.5)], n_features= 2, random_state = 2)
-
     iris = load_iris()
     X = iris.data
-    # plt.figure()
-    # plt.scatter(X[:, 0], X[:, 1])
-    # plt.show()
 
     km = KMeans(10, 1000)
     km.get_elbow(X)
