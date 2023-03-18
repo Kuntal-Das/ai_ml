@@ -1,4 +1,3 @@
-from collections import OrderedDict
 import itertools
 import pandas as pd
 import numpy as np
@@ -12,7 +11,7 @@ class Apriori:
         self.min_items = min_items
         self.pool_nos = pool_nos
 
-    def apriori(self, D, minSup):
+    def fit(self, D, minSup):
         # unique items list                                
         Items = set()
         no_of_transactions, no_of_items = 0, 0
@@ -98,5 +97,5 @@ if __name__ == '__main__':
     data = pd.read_csv('datasets/groceries - groceries.csv', dtype=str)
     D = data.values.tolist()
     apr = Apriori(1, 16)
-    F = apr.apriori(np.array(D), minSup=0.07)
+    F = apr.fit(np.array(D), minSup=0.045)
     apr.print(F)
