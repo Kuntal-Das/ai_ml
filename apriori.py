@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import itertools
 import pandas as pd
 import numpy as np
@@ -5,39 +6,40 @@ from multiprocessing import Pool
 
 
 class Apriori:
-    def __init__(self, pool_nos=8) -> None:
+    # min_items to consider, no of process to speed up the processing
+    def __init__(self, min_items=1, pool_nos=8):
         self.i = 1
+        self.min_items = min_items
         self.pool_nos = pool_nos
 
     def apriori(self, D, minSup):
-        Transactions = {}
+        # unique items list                                
         Items = set()
         no_of_transactions, no_of_items = 0, 0
         for T in D:
             no_of_transactions += 1
             for i, I in enumerate(T):
+                # ignoring the transaction count and NaN values
                 if I is None or I == 'nan' or i == 0:
                     continue
-                if I in Items:
-                    Transactions[I] += 1
-                else:
+                if I not in Items:
                     Items.add(I)
                     no_of_items += 1
-                    Transactions[I] = 1
-
+                    
+        # unique items list                                
         self.Items = np.array(list(Items))
         items_indexs = list(range(0, no_of_items))
 
+        # mapping items with O and 1 based on the presence of the item
         new_data_list = []
         for r in D:
             new_data_list.append([1 if k in r else 0 for k in self.Items])
         self.new_data_list = np.array(new_data_list)
 
-        C = {}
         L = {}
 
-        c1_len = 0
         while True:
+            # geting all unique combinations with no of items per set being `i`
             combinations_set = set()
             for j in itertools.combinations(items_indexs, self.i):
                 cmb = frozenset(j)
@@ -47,27 +49,34 @@ class Apriori:
             combinations = np.array(list(combinations_set))
             item_set_found = 0
             items_indexs = []
+            
+            # using pooling to speed up the compute utilizing more than one cpu cores
             with Pool(processes=self.pool_nos) as pool:
-                combination_occurance_pairs = pool.map(
-                    self.get_suport, combinations)
+                # get no of occurances in the dataset
+                combination_occurance_pairs = pool.map(self.get_occurance, combinations)
 
             for (cmb, occurance) in combination_occurance_pairs:
                 key_list = []
                 support = occurance / no_of_transactions
+                # eleminating combinations based on min support value
                 if (support >= minSup):
                     key_list.extend([self.Items[item_indx]
                                     for item_indx in cmb])
-                    L[", ".join(key_list)] = support
                     if len(cmb) >= self.i:
                         items_indexs.extend(cmb)
                     item_set_found += 1
+                    # adding to result if it contains more than `min_items` items
+                    if self.i >= self.min_items:
+                        L[", ".join(key_list)] = support
+                        
+            # stop searching when no combination is found with min support and `i` items
             if item_set_found == 0:
                 break
             self.i += 1
         return L
 
-    def get_suport(self, combination):
-        support = 0
+    def get_occurance(self, combination):
+        occurance = 0
         key = []
         for row in self.new_data_list:
             count = 0
@@ -75,20 +84,19 @@ class Apriori:
                 if p == 1 and item_index in combination:
                     count += 1
             if count == self.i:
-                support += 1
-        return combination, support
+                occurance += 1
+        return combination, occurance
 
+    # print function for printing occurances 
     def print(self, L):
-        print("{:<30} {:<10}".format('Combinations', 'Support'))
+        print("{:<55} {:<10}".format('COMBINATIONS', 'SUPPORT'))
         for key, value in L.items():
-            print("{:<30} {:<10}".format(key, value))
+            print("{:<55} {:<10}".format(key, value))
 
 
 if __name__ == '__main__':
     data = pd.read_csv('datasets/groceries - groceries.csv', dtype=str)
-
-    # D = data.apply(lambda x: [y for y in x.dropna()], axis=0).tolist()
     D = data.values.tolist()
-    apr = Apriori(16)
-    F = apr.apriori(np.array(D), minSup=0.03)
+    apr = Apriori(1, 16)
+    F = apr.apriori(np.array(D), minSup=0.07)
     apr.print(F)
