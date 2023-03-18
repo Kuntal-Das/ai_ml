@@ -5,8 +5,9 @@ from multiprocessing import Pool
 
 
 class Apriori:
-    def __init__(self) -> None:
+    def __init__(self, pool_nos=8) -> None:
         self.i = 1
+        self.pool_nos = pool_nos
 
     def apriori(self, D, minSup):
         Transactions = {}
@@ -44,17 +45,23 @@ class Apriori:
                     combinations_set.add(cmb)
 
             combinations = np.array(list(combinations_set))
-            count = 0
+            item_set_found = 0
             items_indexs = []
-            for combination in combinations:
-                support, key = self.get_suport(combination)
-                if (support / no_of_transactions >= minSup):
-                    L[key] = support
-                    if len(combination) >= self.i:
-                        items_indexs.extend(combination)
-                    count += 1
+            with Pool(processes=self.pool_nos) as pool:
+                combination_occurance_pairs = pool.map(
+                    self.get_suport, combinations)
 
-            if count == 0:
+            for (cmb, occurance) in combination_occurance_pairs:
+                key_list = []
+                support = occurance / no_of_transactions
+                if (support >= minSup):
+                    key_list.extend([self.Items[item_indx]
+                                    for item_indx in cmb])
+                    L[", ".join(key_list)] = support
+                    if len(cmb) >= self.i:
+                        items_indexs.extend(cmb)
+                    item_set_found += 1
+            if item_set_found == 0:
                 break
             self.i += 1
         return L
@@ -69,17 +76,12 @@ class Apriori:
                     count += 1
             if count == self.i:
                 support += 1
-        key.extend([self.Items[item_indx] for item_indx in combination])
-        return support, ", ".join(key)
+        return combination, support
 
     def print(self, L):
-        string_out = [
-            "Combinations\t:\tSupport",
-        ]
+        print("{:<30} {:<10}".format('Combinations', 'Support'))
         for key, value in L.items():
-            string_out.append(f"{key}\t:\t{value}")
-
-        return "\n".join(string_out)
+            print("{:<30} {:<10}".format(key, value))
 
 
 if __name__ == '__main__':
@@ -87,6 +89,6 @@ if __name__ == '__main__':
 
     # D = data.apply(lambda x: [y for y in x.dropna()], axis=0).tolist()
     D = data.values.tolist()
-    apr = Apriori()
-    F = apr.apriori(np.array(D), minSup=0.15)
+    apr = Apriori(16)
+    F = apr.apriori(np.array(D), minSup=0.03)
     apr.print(F)
