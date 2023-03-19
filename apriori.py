@@ -12,8 +12,8 @@ class Apriori:
         self.pool_nos = pool_nos
 
     def fit(self, D, minSup):
-        # unique items list                                
-        Items = set()
+        # unique items set
+        items_set = set()
         no_of_transactions, no_of_items = 0, 0
         for T in D:
             no_of_transactions += 1
@@ -21,21 +21,21 @@ class Apriori:
                 # ignoring the transaction count and NaN values
                 if I is None or I == 'nan' or i == 0:
                     continue
-                if I not in Items:
-                    Items.add(I)
+                if I not in items_set:
+                    items_set.add(I)
                     no_of_items += 1
-                    
-        # unique items list                                
-        self.Items = np.array(list(Items))
+
+        # unique items list
+        self.Items = np.array(list(items_set))
         items_indexs = list(range(0, no_of_items))
 
         # mapping items with O and 1 based on the presence of the item
         new_data_list = []
         for r in D:
-            new_data_list.append([1 if k in r else 0 for k in self.Items])
+            new_data_list.append([1 if k in r else 0 for k in items_set])
         self.new_data_list = np.array(new_data_list)
 
-        L = {}
+        L = []
 
         while True:
             # geting all unique combinations with no of items per set being `i`
@@ -48,11 +48,12 @@ class Apriori:
             combinations = np.array(list(combinations_set))
             item_set_found = 0
             items_indexs = []
-            
+
             # using pooling to speed up the compute utilizing more than one cpu cores
             with Pool(processes=self.pool_nos) as pool:
                 # get no of occurances in the dataset
-                combination_occurance_pairs = pool.map(self.get_occurance, combinations)
+                combination_occurance_pairs = pool.map(
+                    self.get_occurance, combinations)
 
             for (cmb, occurance) in combination_occurance_pairs:
                 key_list = []
@@ -66,31 +67,28 @@ class Apriori:
                     item_set_found += 1
                     # adding to result if it contains more than `min_items` items
                     if self.i >= self.min_items:
-                        L[", ".join(key_list)] = support
-                        
+                        L.append((", ".join(key_list), support))
+
             # stop searching when no combination is found with min support and `i` items
             if item_set_found == 0:
                 break
             self.i += 1
+        L.sort(key=lambda a: a[1], reverse=True)
         return L
 
     def get_occurance(self, combination):
         occurance = 0
-        key = []
-        for row in self.new_data_list:
-            count = 0
-            for item_index, p in enumerate(row):
-                if p == 1 and item_index in combination:
-                    count += 1
-            if count == self.i:
+        selected_occurances = self.new_data_list[:, list(combination)]
+        for row in selected_occurances:
+            if np.sum(row) == self.i:
                 occurance += 1
         return combination, occurance
 
-    # print function for printing occurances 
+    # print function for printing occurances
     def print(self, L):
         print("{:<55} {:<10}".format('COMBINATIONS', 'SUPPORT'))
-        for key, value in L.items():
-            print("{:<55} {:<10}".format(key, value))
+        for (items, support) in L:
+            print("{:<55} {:<10}".format(items, support))
 
 
 if __name__ == '__main__':
