@@ -88,7 +88,7 @@ class Apriori:
     def print(self, L):
         print("{:<55} {:<10}".format('COMBINATIONS', 'SUPPORT'))
         for (items, support) in L:
-            print("{:<55} {:<10}".format(items, support))
+            print("{:<45} {:<10}".format(items, support))
 
 
 if __name__ == '__main__':
