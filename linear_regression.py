@@ -26,7 +26,7 @@ class LinReg:
                     self.slope -= self.lr * experiences[j]
                     self.y_intercept -= self.lr
 
-            if i % 10000 == 0:
+            if i % (self.epoch / 10) == 0:
                 print(
                     f"MAE loss: {self.calc_MAE_error(experiences,salaries)}")
                 self.lr -= 0.01
@@ -36,15 +36,17 @@ class LinReg:
         for (x, y) in zip(experiences, salaries):
             error += abs(y - ((self.slope*x) + self.y_intercept))
 
-        return error / len(experiences)
+        return error / (2*len(experiences))
 
     def predict_y(self, experience):
         return (self.slope * experience) + self.y_intercept
 
     def plot(self, experiences, salary):
-        plt.plot(experiences, salary, linestyle="dashed")
+        plt.figure()
+        plt.plot(experiences, salary, kind="scatter")
         plt.plot(experiences, [self.predict_y(exp)
-                 for exp in experiences], linestyle="dashed")
+                 for exp in experiences], label="Prediction")
+        plt.show()
 
 
 if __name__ == '__main__':
@@ -53,4 +55,4 @@ if __name__ == '__main__':
     linreg.train(df['YearsExperience'], df['Salary'])
     pred_sal = linreg.predict_y(2.5)
     print(f"Predicted salary for 2.5 year experienced: {pred_sal}")
-    # linreg.plot(df['YearsExperience'], df['Salary'])
+    linreg.plot(df['YearsExperience'], df['Salary'])
