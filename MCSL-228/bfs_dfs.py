@@ -8,7 +8,7 @@ class Graph:
         self.graph[u].append(v)
 
     def bfs(self, start_node, goal_node):
-        print("BFS node ")
+        print("\nBFS node traversal: ", end= " ")
         CLOSE_visited = set()
         OPEN_queue = []
 
@@ -27,6 +27,7 @@ class Graph:
                     OPEN_queue.append(adjacent_node)
 
     def dfs(self, start_node, goal_node):
+        print("\nDFS node traversal: ", end=" ")
         CLOSE_visited = set()
         OPEN_stack = []
 
@@ -62,8 +63,8 @@ if __name__ == '__main__':
     g.add_edge(9, 6)
     g.add_edge(9, 8)
 
-    start_node, goal_state = 1, 8
-    print("BFS Traversal starting from node", start_node)
-    g.bfs(start_node, goal_state)
-    print()
-    g.dfs(start_node, goal_state)
+    start_node, goal_node = 1, 8
+    print("Traversal starting node", start_node)
+    print("Traversal goal node", goal_node)
+    g.bfs(start_node, goal_node)
+    g.dfs(start_node, goal_node)
