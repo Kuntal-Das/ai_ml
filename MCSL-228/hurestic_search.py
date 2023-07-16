@@ -1,70 +1,106 @@
 from collections import defaultdict
 import heapq
+import math
 
 class Graph:
     def __init__(self):
         self.graph = defaultdict(list)
-        self.huristics = defaultdict(int)
+        self._huristics = defaultdict(int)
 
     def add_edge(self, parent_node, node, edge_weight):
         self.graph[parent_node].append((node, edge_weight))
 
     def add_huristic(self, node, huristic):
-        self.huristics[node] = huristic
+        self._huristics[node] = huristic
         self.graph[node] = []
+
+    def get_huristic(self, node, target)->int:
+        return self._huristics[node]
 
     def best_first_search(self, start_node, target_node):
         print("Best first search node traversal: ", end= " ")
-        visited = set()
-        priority_queue = [(self.huristics[start_node], start_node)]
+        CLOSE_visited = set()
+        priority_queue = [(self.get_huristic(start_node, target_node), start_node)]
 
         while priority_queue:
             (priority, current_node) = heapq.heappop(priority_queue)
 
-            if current_node in visited:
+            if current_node in CLOSE_visited:
                 continue
             
             print(f"({current_node}, {priority})", end=" ")
-            visited.add(current_node)
+            CLOSE_visited.add(current_node)
 
             if current_node == target_node:
                 return True
 
             for neighbor, weight in self.graph[current_node]:
-                huristic = self.huristics[neighbor]
-                if neighbor not in visited:
+                huristic = self.get_huristic(neighbor, target_node)
+                if neighbor not in CLOSE_visited:
                     heapq.heappush(priority_queue, (huristic, neighbor))
         return False
     
 
     def a_start_search(self, start_node, target_node):
         print("A* search node traversal: ", end= " ")
-        visited = set()
+        CLOSE_visited = set()
         g_score = defaultdict(int)
-        priority_queue = [(self.huristics[start_node], start_node)]
+        priority_queue = [(self.get_huristic(start_node, target_node), start_node)]
         g_score[start_node] = 0
 
         while priority_queue:
             (priority, current_node) = heapq.heappop(priority_queue)
 
-            if current_node in visited:
+            if current_node in CLOSE_visited:
                 continue
             
             print(f"({current_node}, {priority})", end=" ")
-            visited.add(current_node)
+            CLOSE_visited.add(current_node)
 
             if current_node == target_node:
                 return True
 
             for neighbor, weight in self.graph[current_node]:
-                huristic = self.huristics[neighbor]
+                huristic = self.get_huristic(neighbor,target_node) 
                 g_score[neighbor] = weight + g_score[current_node]
                 
-                if neighbor not in visited:
+                if neighbor not in CLOSE_visited:
                     heapq.heappush(priority_queue, (g_score[neighbor] + huristic, neighbor))
         return False
-
     
+    def ida_star_search(self, start_node, target_node, increment_val=1):
+        print("Iterative Deepening A* search node traversal: ", end= " ")
+        
+        def dfs(current_node, path_cost, depth_limit):
+            priority = path_cost + self.get_huristic(current_node, target_node)
+
+            if priority > depth_limit:
+                return priority, False
+
+            print(f"({current_node}, {priority})", end=" ")
+            
+            if current_node == target_node:
+                return priority, True
+
+            min_cost = math.inf
+            for neighbor, weight in self.graph[current_node]:
+                new_cost, found = dfs(neighbor, path_cost + weight, depth_limit)
+                if found:
+                    return new_cost, True
+                min_cost = min(min_cost, new_cost)
+
+            return min_cost, False
+
+        depth_limit = self.get_huristic(start_node, target_node)
+        while True:
+            print(f"\nThreashold: {depth_limit} :",end=" ")
+            _, found = dfs(start_node, 0, depth_limit)
+            if found:
+                return True
+            depth_limit = math.inf if depth_limit == math.inf else depth_limit + increment_val
+        
+        return False
+
 
 def Graph4(g:Graph):
     g.add_huristic(1, 5)
@@ -127,7 +163,7 @@ def Graph3(g:Graph):
 
 if __name__ == '__main__':
     g = Graph()
-    start_node, goal_node = Graph3(g)
+    start_node, goal_node = Graph4(g)
 
     print(f"Start Node: {start_node}, Goal Node: {goal_node}")
 
@@ -135,4 +171,7 @@ if __name__ == '__main__':
     else: print("\t[GOAL NOT FOUND]")
 
     if g.a_start_search(start_node, goal_node): print("\t[GOAL FOUND]")
+    else: print("\t[GOAL NOT FOUND]")
+
+    if g.ida_star_search(start_node, goal_node, 2): print("\t[GOAL FOUND]")
     else: print("\t[GOAL NOT FOUND]")
