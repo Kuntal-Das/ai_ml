@@ -9,6 +9,8 @@ class Graph:
     #     self.CLOSE_visited = set()
 
     def add_edge(self, u, v):
+        # if u not in self.graph:
+        #     self.graph[u] = []
         self.graph[u].append(v)
 
     def bfs(self, start_node, goal_node):
@@ -54,9 +56,8 @@ class Graph:
                     OPEN_stack.insert(0, adjacent_node)
         return False
 
-
-    def _dfs_recursive(self, current_node, goal_node, CLOSE_visited):
-        if current_node == goal_node:
+    def _dfs_recursive(self, current_node, target_node, CLOSE_visited):
+        if current_node == target_node:
             print(current_node, end=" ")
             return True
         
@@ -67,7 +68,7 @@ class Graph:
         CLOSE_visited.add(current_node)
 
         for adjacent_node in self.graph[current_node]:
-            if adjacent_node not in CLOSE_visited and self._dfs_recursive(adjacent_node, goal_node, CLOSE_visited):
+            if adjacent_node not in CLOSE_visited and self._dfs_recursive(adjacent_node, target_node, CLOSE_visited):
                 return True
         
         return False
@@ -77,17 +78,16 @@ class Graph:
         print("Recursive DFS node traversal: ", end=" ")
         return self._dfs_recursive(start_node, goal_node, CLOSE_visited)
 
-
-    def iddfs(self, start_node, target_node, max_depth):
+    def iddfs(self, start_node, goal_node, max_depth):
         print(f"Iterative DFS node traversal with depth[{max_depth}]: ", end=" ")
         for depth in range(1, max_depth + 1):
             CLOSE_visited = set()
             print(f"\nDepth: {depth}:", end=" ")
-            if self.dfs_by_depth(start_node, target_node, depth, CLOSE_visited):
+            if self._dfs_by_depth(start_node, goal_node, CLOSE_visited, depth):
                 return True
         return False
 
-    def dfs_by_depth(self, current_node, target_node, depth, CLOSE_visited):
+    def _dfs_by_depth(self, current_node, target_node, CLOSE_visited, depth):
         if depth <= 0:
             return False
         
@@ -99,10 +99,11 @@ class Graph:
         CLOSE_visited.add(current_node)
 
         for neighbor in self.graph[current_node]:
-            if neighbor not in CLOSE_visited and self.dfs_by_depth(neighbor, target_node, depth - 1, CLOSE_visited):
+            if neighbor not in CLOSE_visited and self._dfs_by_depth(neighbor, target_node, CLOSE_visited, depth - 1):
                 return True
 
         return False
+
 
 def Graph1(g):
     g.add_edge(1, 2) 
@@ -173,7 +174,7 @@ if __name__ == '__main__':
     else: print("\t[GOAL NOT FOUND]")
 
     if g.dfs_recursive(start_node, goal_node): print("\t[GOAL FOUND]")
-    else: print("\t[GOAL NOT FOUND]")  
+    else: print("\t[GOAL NOT FOUND]")
 
     if g.iddfs(start_node, goal_node, 5): print("\t[GOAL FOUND]")
     else: print("\t[GOAL NOT FOUND]")
