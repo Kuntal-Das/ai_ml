@@ -5,9 +5,6 @@ class Graph:
         self.graph = defaultdict(list)
         # self.CLOSE_visited = set()
 
-    # def reset_visited_set(self):
-    #     self.CLOSE_visited = set()
-
     def add_edge(self, u, v):
         # if u not in self.graph:
         #     self.graph[u] = []
@@ -60,10 +57,7 @@ class Graph:
         if current_node == target_node:
             print(current_node, end=" ")
             return True
-        
-        # if start_node in CLOSE_visited:
-        #     return False
-        
+
         print(current_node, end=" ")
         CLOSE_visited.add(current_node)
 
