@@ -47,7 +47,6 @@ if __name__ == '__main__':
     model = polynomial_regression(X_train, y_train, degree)
     
     # Predict y for the test data
-    poly_features = PolynomialFeatures(degree=degree)
     X_test_poly = poly_features.transform(X_test[:, 2].reshape(-1, 1))
     y_pred = model.predict(X_test_poly)
     
