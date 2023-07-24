@@ -1,38 +1,24 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import load_diabetes
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error
 
-# Load the Diabetes dataset
-diabetes = load_diabetes()
-X = diabetes.data  # Features
-y = diabetes.target  # Target variable
+# Sample dataset (x and y values)
+x = np.array([-2, -1, 0, 1, 2, 3, 4, 5])
+y = np.array([15, 4, 1, 2, 5, 14, 27, 40])
 
-def polynomial_regression(X, y, degree):
-    poly_features = PolynomialFeatures(degree=degree)
-    X_poly = poly_features.fit_transform(X)
-    
-    model = LinearRegression()
-    model.fit(X_poly, y)
-    
-    return model
+def polynomial_regression(x, y, degree):
+    coefficients = np.polyfit(x, y, degree)
+    return coefficients
 
-def plot_polynomial_fit(X, y, model):
-    plt.scatter(X[:, 2], y, color='blue', label='Data points')
-    
-    # Sort the X values for smooth plotting of the polynomial fit
-    X_sorted = np.sort(X[:, 2])
-    X_poly_sorted = poly_features.fit_transform(X_sorted.reshape(-1, 1))
-    y_pred = model.predict(X_poly_sorted)
-    
-    plt.plot(X_sorted[:, 0], y_pred, color='red', label='Polynomial Fit')
-    plt.xlabel('BMI (Body Mass Index)')
-    plt.ylabel('Diabetes Progression After One Year')
+def predict(x, coefficients):
+    return np.polyval(coefficients, x)
+
+def plot_polynomial_fit(x, y, coefficients):
+    plt.scatter(x, y, color='blue', label='Data points')
+    plt.plot(x, predict(x, coefficients), color='red', label='Polynomial Fit')
+    plt.xlabel('X values')
+    plt.ylabel('Y values')
     plt.legend()
-    plt.title('Polynomial Regression on Diabetes Dataset')
+    plt.title('Polynomial Regression')
     plt.grid(True)
     plt.show()
 
@@ -40,19 +26,17 @@ if __name__ == '__main__':
     # Set the degree of the polynomial regression
     degree = 3
     
-    # Split the data into training and testing sets
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    # Perform polynomial regression
+    coefficients = polynomial_regression(x, y, degree)
     
-    # Perform polynomial regression on the training data
-    model = polynomial_regression(X_train, y_train, degree)
+    # Print the equation of the polynomial fit
+    equation = ' + '.join([f"{coeff:.2f} * x^{i}" for i, coeff in enumerate(reversed(coefficients))])
+    print(f"Polynomial fit equation: y = {equation}")
     
-    # Predict y for the test data
-    X_test_poly = poly_features.transform(X_test[:, 2].reshape(-1, 1))
-    y_pred = model.predict(X_test_poly)
+    # Predict y for a given x (e.g., x = 6)
+    x_to_predict = 6
+    predicted_y = predict(x_to_predict, coefficients)
+    print(f"Predicted y for x = {x_to_predict}: {predicted_y:.2f}")
     
-    # Calculate the Mean Squared Error (MSE) as a measure of performance
-    mse = mean_squared_error(y_test, y_pred)
-    print(f"Mean Squared Error (MSE): {mse:.2f}")
-    
-    # Plot the polynomial fit on the test data
-    plot_polynomial_fit(X_test, y_test, model)
+    # Plot the polynomial fit
+    plot_polynomial_fit(x, y, coefficients)
